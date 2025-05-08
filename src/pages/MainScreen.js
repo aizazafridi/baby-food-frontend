@@ -1,6 +1,7 @@
 // src/pages/MainScreen.js
-import React from 'react';
-import { View, Text, TextInput, Image, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useLayoutEffect } from 'react';
+import { View, Text, TextInput, Image, FlatList, TouchableOpacity, Button } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../stylesheets/styles';
 
 const recentItems = [
@@ -9,6 +10,32 @@ const recentItems = [
 ];
 
 export default function MainScreen({ navigation }) {
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        navigation.replace('Login'); // redirect if no token
+      }
+    };
+    checkAuth();
+  }, []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          title="Logout"
+          onPress={async () => {
+            await AsyncStorage.removeItem('token');
+            //Alert.alert('Logged out');
+            navigation.replace('Login');
+          }}
+        />
+      ),
+    });
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Welcome to Baby Bites</Text>
@@ -44,6 +71,12 @@ export default function MainScreen({ navigation }) {
 
       {/* Bottom Nav Placeholder */}
       <View style={styles.bottomNav}>
+      <Text
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Login')}
+        >
+          Login
+        </Text>
         <Text style={styles.navItem}>Home</Text>
         <Text style={styles.navItem}>Browse</Text>
         <Text
@@ -57,4 +90,5 @@ export default function MainScreen({ navigation }) {
       </View>
     </View>
   );
+
 }

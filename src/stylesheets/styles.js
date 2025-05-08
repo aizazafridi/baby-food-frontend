@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
 
+  // --- Shared & home screen styles ---
   container: {
     flex: 1,
     padding: 16,
@@ -67,8 +68,41 @@ export default StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
   },
+
   navItem: {
     fontSize: 16,
+  },
+
+   // --- Login/Register styles ---
+
+   authContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fdfdfd',
+  },
+
+  authTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 24,
+  },
+
+  authInput: {
+    width: '100%',
+    height: 48,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+  },
+
+  authButton: {
+    width: '100%',
+    marginBottom: 10,
   },
   
 });
