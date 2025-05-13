@@ -1,7 +1,8 @@
 // src/pages/MainScreen.js
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, TextInput, Image, FlatList, TouchableOpacity, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from "jwt-decode";
 import styles from '../stylesheets/styles';
 
 const recentItems = [
@@ -10,12 +11,22 @@ const recentItems = [
 ];
 
 export default function MainScreen({ navigation }) {
+
+  const [username, setUsername] = useState(null);
   
   useEffect(() => {
     const checkAuth = async () => {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
         navigation.replace('Login'); // redirect if no token
+        return;
+      }
+      try {
+        const decoded = jwtDecode(token);
+        setUsername(decoded.username || `User #${decoded.id}`);
+      } catch (err) {
+        console.error('Invalid token', err);
+        //navigation.replace('Login');
       }
     };
     checkAuth();
@@ -24,17 +35,23 @@ export default function MainScreen({ navigation }) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Button
-          title="Logout"
-          onPress={async () => {
-            await AsyncStorage.removeItem('token');
-            //Alert.alert('Logged out');
-            navigation.replace('Login');
-          }}
-        />
+        <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
+          {username && (
+            <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 4, color: 'grey' }}>
+              Welcome {username}
+            </Text>
+          )}
+          <Button
+            title="Logout"
+            onPress={async () => {
+              await AsyncStorage.removeItem('token');
+              navigation.replace('Login');
+            }}
+          />
+        </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, username]);
 
   return (
     <View style={styles.container}>
