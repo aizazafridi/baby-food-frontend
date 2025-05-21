@@ -4,6 +4,7 @@ import { View, Text, TextInput, Image, FlatList, TouchableOpacity, Button } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from "jwt-decode";
 import styles from '../stylesheets/styles';
+import axios from 'axios';
 
 const recentItems = [
   { id: '1', name: 'Avocado', image: require('../../assets/avocado.jpg') },
@@ -12,25 +13,49 @@ const recentItems = [
 
 export default function MainScreen({ navigation }) {
 
+  const [foods, setFoods] = useState([]);
+  const [tip, setTip] = useState(null);
   const [username, setUsername] = useState(null);
   
   useEffect(() => {
-    const checkAuth = async () => {
+
+    // Get token and set token variable
+    const fetchData = async () => {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
-        navigation.replace('Login'); // redirect if no token
+        navigation.replace('Login');
         return;
       }
+  
       try {
+        // Retrieve token from token variable and decode it
         const decoded = jwtDecode(token);
         setUsername(decoded.username || `User #${decoded.id}`);
-      } catch (err) {
-        console.error('Invalid token', err);
-        //navigation.replace('Login');
+  
+        const response = await axios.get('http://127.0.0.1:3000/api/auth/main-screen-data', {
+          headers: {
+            Authorization: `Bearer ${token}`, // <-- Add token here
+          },
+        });
+  
+        // Set foods and tip
+        setFoods(response.data.foods || []);
+        setTip(response.data.tips?.[0] || null);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Redirect if token is invalid
+        if (error.response?.status === 401) {
+          await AsyncStorage.removeItem('token');
+          navigation.replace('Login');
+        }
       }
     };
-    checkAuth();
+  
+    fetchData();
+    
   }, []);
+  
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -64,24 +89,30 @@ export default function MainScreen({ navigation }) {
       />
 
       {/* Daily Tip */}
-      <View style={styles.tipBox}>
-        <Text style={styles.tipTitle}>Today's Tip</Text>
-        <Text style={styles.tipText}>Always serve soft foods in finger-sized strips.</Text>
-      </View>
+      {tip && (
+        <View style={styles.tipBox}>
+          <Text style={styles.tipTitle}>Today's Tip</Text>
+          <Text style={styles.tipText}>{tip.description}</Text>
+        </View>
+      )}
 
-      {/* Recently Viewed */}
-      <Text style={styles.sectionTitle}>Recently Viewed</Text>
+      {/* Foods Section */}
+      <Text style={styles.sectionTitle}>Foods</Text>
       <FlatList
         horizontal
-        data={recentItems}
-        keyExtractor={(item) => item.id}
+        data={foods}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.foodItem}
-            onPress={() => navigation.navigate('Food', { foodId: item.id })}
+          style={styles.foodItem}
+          onPress={() => navigation.navigate('Food', { foodId: item.id })}
           >
-            <Image source={item.image} style={styles.foodImage} />
-            <Text>{item.name}</Text>
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.foodImage}
+            resizeMode="cover"
+          />
+          <Text>{item.name}</Text>
           </TouchableOpacity>
         )}
       />
